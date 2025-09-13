@@ -1,0 +1,17 @@
+{
+  "name": "discord-leveling-bot",
+  "version": "1.0.0",
+  "description": "A Discord bot with server and global leveling systems",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.22.1",
+    "mongoose": "^8.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
