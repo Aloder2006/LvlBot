@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const GlobalLevel = require('../models/GlobalLevel');
 const LevelUtils = require('../utils/levelUtils');
+const CanvasUtils = require('../utils/canvasUtils');
 const config = require('../../config/config');
 
 module.exports = {
@@ -30,29 +31,17 @@ module.exports = {
         return await interaction.editReply({ embeds: [embed] });
       }
 
-      const progress = LevelUtils.getProgressToNextLevel(userData.totalXP);
-      const progressBar = LevelUtils.generateProgressBar(progress.percentage);
+      const globalData = {
+        level: userData.level,
+        totalXP: userData.totalXP,
+        totalMessages: userData.totalMessages,
+        totalVoiceTime: userData.totalVoiceTime,
+      };
 
-      const embed = new EmbedBuilder()
-        .setColor(config.COLORS.PRIMARY)
-        .setTitle(`${config.EMOJIS.CROWN} ${targetUser.displayName}'s Global Profile`)
-        .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
-        .addFields(
-          {
-            name: `${config.EMOJIS.STAR} Global Level ${userData.level}`,
-            value: `\`\`\`${progressBar}\`\`\`${progress.progress}/${progress.total} XP`,
-            inline: false
-          },
-          {
-            name: 'Global Statistics',
-            value: `**Total XP:** ${userData.totalXP}\n**Messages Sent:** ${userData.totalMessages}\n**Voice Time:** ${Math.floor(userData.totalVoiceTime / 60000)} minutes`,
-            inline: false
-          }
-        )
-        .setFooter({ text: 'This shows your progress across all servers' })
-        .setTimestamp();
+      const buffer = await CanvasUtils.createProfileCard(targetUser, globalData);
+      const attachment = new AttachmentBuilder(buffer, { name: 'profile-card.png' });
 
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply({ files: [attachment] });
 
     } catch (error) {
       console.error('Error in profile command:', error);

@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const ServerLevel = require('../models/ServerLevel');
 const LevelUtils = require('../utils/levelUtils');
+const CanvasUtils = require('../utils/canvasUtils');
 const config = require('../../config/config');
 
 module.exports = {
@@ -31,39 +32,17 @@ module.exports = {
         return await interaction.editReply({ embeds: [embed] });
       }
 
-      // Get text progress
-      const textProgress = LevelUtils.getProgressToNextLevel(userData.textXP);
-      const textBar = LevelUtils.generateProgressBar(textProgress.percentage);
-      
-      // Get voice progress
-      const voiceProgress = LevelUtils.getProgressToNextLevel(userData.voiceXP);
-      const voiceBar = LevelUtils.generateProgressBar(voiceProgress.percentage);
+      const serverData = {
+        textLevel: userData.textLevel,
+        voiceLevel: userData.voiceLevel,
+        textXP: userData.textXP,
+        voiceXP: userData.voiceXP,
+      };
 
-      const embed = new EmbedBuilder()
-        .setColor(config.COLORS.PRIMARY)
-        .setTitle(`${config.EMOJIS.STAR} ${targetUser.displayName}'s Server Rank`)
-        .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
-        .addFields(
-          {
-            name: `${config.EMOJIS.KEYBOARD} Text Level ${userData.textLevel}`,
-            value: `\`\`\`${textBar}\`\`\`${textProgress.progress}/${textProgress.total} XP`,
-            inline: false
-          },
-          {
-            name: `${config.EMOJIS.MICROPHONE} Voice Level ${userData.voiceLevel}`,
-            value: `\`\`\`${voiceBar}\`\`\`${voiceProgress.progress}/${voiceProgress.total} XP`,
-            inline: false
-          },
-          {
-            name: 'Statistics',
-            value: `**Total Text XP:** ${userData.textXP}\n**Total Voice XP:** ${userData.voiceXP}\n**Voice Time:** ${Math.floor(userData.voiceTime / 60000)} minutes`,
-            inline: false
-          }
-        )
-        .setFooter({ text: `Use /top to see server leaderboards` })
-        .setTimestamp();
+      const buffer = await CanvasUtils.createRankCard(targetUser, serverData);
+      const attachment = new AttachmentBuilder(buffer, { name: 'rank-card.png' });
 
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply({ files: [attachment] });
 
     } catch (error) {
       console.error('Error in rank command:', error);
